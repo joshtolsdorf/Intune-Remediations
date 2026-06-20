@@ -42,8 +42,8 @@ Intune-Remediations
 ├── Images
 ├── Remediations
 │   ├── Automatic-Time-Zone
-│   ├── Remove-QuickAssist
-│   ├── Remove-Balto
+│   ├── File-Extension-Show
+│   ├── Persistant-Num-Lock
 │   └── ...
 │
 ├── Templates

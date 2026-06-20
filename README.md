@@ -43,7 +43,7 @@ Intune-Remediations
 ├── Remediations
 │   ├── Automatic-Time-Zone
 │   ├── File-Extension-Show
-│   ├── Persistant-Num-Lock
+│   ├── Persistent-Num-Lock
 │   └── ...
 │
 ├── Templates

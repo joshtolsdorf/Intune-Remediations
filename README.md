@@ -14,12 +14,12 @@ This repository focuses on **well-documented, reusable, and production-ready Pow
 
 # Repository Goals
 
-* 📦 Enterprise-ready PowerShell remediations
+* 🚀 Enterprise-ready PowerShell remediations
 * 📚 Comprehensive documentation
 * 🔍 Consistent detection and remediation logic
 * 🧩 Reusable templates for future projects
-* 💡 Share practical Microsoft Intune solutions
-* 🚀 Build a maintainable knowledge base for endpoint management
+* 🎁 Share practical Microsoft Intune solutions
+* 🗂️ Build a maintainable knowledge base for endpoint management
 
 ---
 
@@ -42,8 +42,8 @@ Intune-Remediations
 ├── Images
 ├── Remediations
 │   ├── Automatic-Time-Zone
-│   ├── Remove-QuickAssist
-│   ├── Remove-Balto
+│   ├── File-Extension-Show
+│   ├── Persistant-Num-Lock
 │   └── ...
 │
 ├── Templates

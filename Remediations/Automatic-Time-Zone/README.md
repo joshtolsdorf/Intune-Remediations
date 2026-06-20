@@ -1,68 +1,85 @@
 # Automatic Time Zone
 
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207.x-5391FE)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
+![Microsoft Intune](https://img.shields.io/badge/Microsoft-Intune-00A4EF)
+![Run As](https://img.shields.io/badge/Run%20As-SYSTEM-blue)
+![Reboot](https://img.shields.io/badge/Reboot-Not%20Required-success)
+
 Enable Automatic Time Zone on Windows devices using Microsoft Intune Proactive Remediations.
 
 ---
 
-## Overview
+# Overview
 
 This remediation configures the **tzautoupdate** service to enable Automatic Time Zone on Windows devices.
 
-It is useful for organizations with remote users, traveling employees, or devices that frequently change geographic locations.
+The remediation verifies the configuration after applying the change and only exits successfully when the expected state is confirmed.
 
 ---
 
-## Detection Logic
+# Use Case
 
-The detection script verifies the following registry value:
+Organizations with remote employees, hybrid workers, or traveling users may encounter incorrect time zone settings.
 
-| Registry Path                                          | Value   | Expected |
-| ------------------------------------------------------ | ------- | -------- |
-| `HKLM:\SYSTEM\CurrentControlSet\Services\tzautoupdate` | `Start` | `3`      |
-
-### Exit Codes
-
-| Exit Code | Result                  |
-| --------- | ----------------------- |
-| `0`       | Device is compliant     |
-| `1`       | Device is non-compliant |
+This remediation ensures Automatic Time Zone is enabled consistently across managed Windows devices.
 
 ---
 
-## Remediation Logic
+# Requirements
+
+* Windows 10 or Windows 11
+* Microsoft Intune Remediations
+* Execute as **SYSTEM**
+* 64-bit PowerShell recommended
+
+---
+
+# Detection Logic
+
+The detection script verifies:
+
+| Item          | Expected Value                                         |
+| ------------- | ------------------------------------------------------ |
+| Registry Path | `HKLM:\SYSTEM\CurrentControlSet\Services\tzautoupdate` |
+| Value         | `Start`                                                |
+| Expected      | `3`                                                    |
+
+Exit codes:
+
+| Exit Code | Meaning       |
+| --------- | ------------- |
+| `0`       | Compliant     |
+| `1`       | Non-compliant |
+
+---
+
+# Remediation Logic
 
 The remediation script:
 
-1. Sets the registry value:
-
-```powershell
-HKLM:\SYSTEM\CurrentControlSet\Services\tzautoupdate
-Start = 3
-```
-
-2. Verifies the value after making the change.
-
-3. Returns:
-
-* `Exit 0` = Success
-* `Exit 1` = Verification failed
+1. Creates the registry path if necessary.
+2. Sets the expected value.
+3. Verifies the value after remediation.
+4. Returns success only after verification.
 
 ---
 
-## Intune Configuration
+# Intune Configuration
 
-| Setting                                         | Recommended Value |
-| ----------------------------------------------- | ----------------- |
-| Run this script using the logged-on credentials | **No**            |
-| Enforce script signature check                  | **No**            |
-| Run script in 64-bit PowerShell                 | **Yes**           |
+| Setting                         | Value |
+| ------------------------------- | ----- |
+| Run using logged-on credentials | No    |
+| Enforce script signature check  | No    |
+| Run in 64-bit PowerShell        | Yes   |
 
 ---
 
-## Files
+# Files
 
 ```text
 Automatic-Time-Zone/
+│
 ├── Detect-AutomaticTimeZone.ps1
 ├── Remediate-AutomaticTimeZone.ps1
 └── README.md
@@ -70,25 +87,26 @@ Automatic-Time-Zone/
 
 ---
 
-## Requirements
+# Testing
 
-* Windows 10 or Windows 11
-* Microsoft Intune Proactive Remediations
-* Scripts executed as **SYSTEM**
-
----
-
-## Notes
-
-* No reboot is required.
-* The remediation verifies the registry value after making the change instead of assuming success.
+| Scenario                         | Result |
+| -------------------------------- | ------ |
+| Registry value already compliant | Pass   |
+| Registry value non-compliant     | Pass   |
+| Registry path missing            | Pass   |
 
 ---
 
-## Author
+# Notes
 
-**Josh Tolsdorf**
+* No reboot required.
+* Designed for Microsoft Intune Proactive Remediations.
+* Follows the repository PowerShell template and documentation standards.
 
-Infrastructure Engineer
+---
 
-Microsoft Intune • PowerShell • Microsoft 365 • Automation
+# Related Resources
+
+* Repository Templates
+* Root Documentation
+* Microsoft Intune Remediations

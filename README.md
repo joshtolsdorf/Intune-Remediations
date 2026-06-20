@@ -47,7 +47,9 @@ Intune-Remediations
 │   └── ...
 │
 ├── Templates
-│   └── Remediation-Template
+│   ├── Intune-Proactive-Remediation
+│   ├── Intune-Win32-App
+│   └── ...
 │
 ├── .gitattributes
 ├── .gitignore

@@ -1,6 +1,8 @@
 # Intune Remediations
 
-A curated collection of **Microsoft Intune Proactive Remediations** designed for enterprise endpoint management.
+[MIT License] [PowerShell] [Windows 10/11] [Microsoft Intune] [Actively Maintained]
+
+A curated collection of enterprise-ready **Microsoft Intune Proactive Remediations** with documentation, reusable templates, and implementation guidance.
 
 The goal of this repository is to provide well-documented, reusable remediations that solve real-world administrative challenges while following consistent PowerShell and documentation standards.
 

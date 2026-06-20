@@ -1,4 +1,4 @@
-# Microsoft Intune Remediations
+# Intune Remediations
 
 A curated collection of **Microsoft Intune Proactive Remediations** designed for enterprise endpoint management.
 

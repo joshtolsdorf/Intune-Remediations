@@ -1,5 +1,9 @@
 # Remediation Templates
 
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207.x-5391FE)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
+![Microsoft Intune](https://img.shields.io/badge/Microsoft-Intune-00A4EF)
+
 This directory contains the standard templates used throughout the **Intune-Remediations** repository.
 
 The goal is to provide a consistent structure for every remediation, making projects easier to maintain, document, and understand.

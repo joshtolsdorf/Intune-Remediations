@@ -1,5 +1,9 @@
 # Show File Extensions
 
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207.x-5391FE)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
+![Microsoft Intune](https://img.shields.io/badge/Microsoft-Intune-00A4EF)
+
 Automatically enables **Show File Extensions** for the currently logged-on user using **Microsoft Intune Remediations**.
 
 This remediation is designed to run as **SYSTEM** while safely modifying the **logged-on user's HKCU registry hive** by resolving the user's SID and writing directly to **HKEY_USERS**.

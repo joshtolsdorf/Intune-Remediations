@@ -1,5 +1,11 @@
 # Battery Optimization
 
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207.x-5391FE)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
+![Microsoft Intune](https://img.shields.io/badge/Microsoft-Intune-00A4EF)
+![Run As](https://img.shields.io/badge/Run%20As-SYSTEM-blue)
+![Reboot](https://img.shields.io/badge/Reboot-Not%20Required-success)
+
 Optimizes battery performance on Windows laptops by configuring **power management settings for battery (DC) mode only** using **Microsoft Intune Remediations**.
 
 This remediation is designed to run as **SYSTEM** and modifies the currently active Windows power plan to improve battery life without affecting plugged-in (AC) performance.

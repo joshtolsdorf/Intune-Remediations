@@ -45,12 +45,7 @@ Intune-Remediations
 │   ├── File-Extension-Show
 │   ├── Persistent-Num-Lock
 │   └── ...
-│
-├── Templates
-│   ├── Intune-Proactive-Remediation
-│   ├── Intune-Win32-App
-│   └── ...
-│
+|
 ├── .gitattributes
 ├── .gitignore
 ├── LICENSE

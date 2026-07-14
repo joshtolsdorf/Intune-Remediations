@@ -60,7 +60,7 @@ Replace **Your-Network-Name-Here** with the exact name of the saved wireless net
 Example:
 
 ```powershell
-$SsidName = 'ClaimDOC Guest'
+$SsidName = 'Guest-Network'
 ```
 
 ---

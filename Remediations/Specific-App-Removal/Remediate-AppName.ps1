@@ -10,7 +10,7 @@
 
 # Applications to remove (expand array as needed to accommodate all targeted applications)
 $ApplicationsToRemove = @(
-    @{ Name = 'Jabra Direct'; Version = '8.1.14601' }
+    @{ Name = 'Application Name'; Version = '1.0.0' }
 )
 
 $InstalledApps = Get-ItemProperty `

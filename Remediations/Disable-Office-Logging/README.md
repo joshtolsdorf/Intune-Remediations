@@ -1,9 +1,9 @@
 # Disable Microsoft Office Default Logging
 
-![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207.x-5391FE)
-![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)
-![Microsoft Intune](https://img.shields.io/badge/Microsoft-Intune-00A4EF)
-![Run As](https://img.shields.io/badge/Run%20As-SYSTEM-blue)
+![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B%20%7C%207.x-5391FE?style=for-the-badge)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge)
+![Microsoft Intune](https://img.shields.io/badge/Microsoft-Intune-00A4EF?style=for-the-badge)
+![Run As](https://img.shields.io/badge/Run%20As-SYSTEM-blue?style=for-the-badge)
 ![Type](https://img.shields.io/badge/Type-Proactive%20Remediation-success?style=for-the-badge)
 
 Detects and remediates Microsoft Office applications that have **Default Logging** enabled using **Microsoft Intune Remediations**.

@@ -11,7 +11,7 @@
 .NOTES
     Script Name   : Remediate-EventLogSizes.ps1
     Author        : Josh Tolsdorf
-    Last Modified : 2026-08-04
+    Last Modified : 2026-08-05
     Requires      : Administrator or SYSTEM privileges
 #>
 
@@ -45,9 +45,9 @@ $Logs = @(
 )
 
 $Failures = [System.Collections.Generic.List[string]]::new()
+$SkippedLogs = [System.Collections.Generic.List[string]]::new()
 $UpdatedCount = 0
 $AlreadyCompliantCount = 0
-$SkippedCount = 0
 
 foreach ($Log in $Logs) {
     try {
@@ -55,7 +55,7 @@ foreach ($Log in $Logs) {
     }
     catch [System.Diagnostics.Eventing.Reader.EventLogNotFoundException] {
         Write-Output "Skipping unavailable log: $Log"
-        $SkippedCount++
+        $SkippedLogs.Add($Log)
         continue
     }
     catch {
@@ -91,11 +91,16 @@ foreach ($Log in $Logs) {
     }
 }
 
+if ($SkippedLogs.Count -gt 0) {
+    Write-Output 'The following logs do not exist on this device and were skipped:'
+    $SkippedLogs | ForEach-Object { Write-Output "  $_" }
+}
+
 if ($Failures.Count -gt 0) {
     Write-Output 'One or more event logs could not be configured:'
     $Failures | ForEach-Object { Write-Output "  $_" }
     exit 1
 }
 
-Write-Output "Event log remediation completed. Updated: $UpdatedCount; Already compliant: $AlreadyCompliantCount; Skipped: $SkippedCount."
+Write-Output "Event log remediation completed. Updated: $UpdatedCount; Already compliant: $AlreadyCompliantCount; Skipped: $($SkippedLogs.Count)."
 exit 0

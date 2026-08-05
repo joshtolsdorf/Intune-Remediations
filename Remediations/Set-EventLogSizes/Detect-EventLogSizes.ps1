@@ -11,7 +11,7 @@
 .NOTES
     Script Name   : Detect-EventLogSizes.ps1
     Author        : Josh Tolsdorf
-    Last Modified : 2026-08-04
+    Last Modified : 2026-08-05
     Requires      : Windows PowerShell 5.1 or PowerShell 7.x
 #>
 
@@ -46,6 +46,7 @@ $Logs = @(
 
 $NonCompliantLogs = [System.Collections.Generic.List[string]]::new()
 $EvaluationFailures = [System.Collections.Generic.List[string]]::new()
+$SkippedLogs = [System.Collections.Generic.List[string]]::new()
 $AvailableLogCount = 0
 
 foreach ($Log in $Logs) {
@@ -62,10 +63,16 @@ foreach ($Log in $Logs) {
     }
     catch [System.Diagnostics.Eventing.Reader.EventLogNotFoundException] {
         Write-Output "Skipping unavailable log: $Log"
+        $SkippedLogs.Add($Log)
     }
     catch {
         $EvaluationFailures.Add("$Log - $($_.Exception.Message)")
     }
+}
+
+if ($SkippedLogs.Count -gt 0) {
+    Write-Output 'The following logs do not exist on this device and were skipped:'
+    $SkippedLogs | ForEach-Object { Write-Output "  $_" }
 }
 
 if ($EvaluationFailures.Count -gt 0) {

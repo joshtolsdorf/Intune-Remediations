@@ -11,7 +11,7 @@
 .NOTES
     Script Name   : Detect-EventLogSizes.ps1
     Author        : Josh Tolsdorf
-    Last Modified : 2026-08-05
+    Last Modified : 2026-08-06
     Requires      : Windows PowerShell 5.1 or PowerShell 7.x
 #>
 
@@ -51,19 +51,21 @@ $AvailableLogCount = 0
 
 foreach ($Log in $Logs) {
     try {
-        $LogConfiguration = Get-WinEvent -ListLog $Log -ErrorAction Stop
-        $AvailableLogCount++
+        $LogConfiguration = Get-WinEvent -ListLog $Log -ErrorAction SilentlyContinue
 
+        if (-not $LogConfiguration) {
+            Write-Output "Skipping unavailable log: $Log"
+            $SkippedLogs.Add($Log)
+            continue
+        }
+
+        $AvailableLogCount++
         $CurrentSizeBytes = [int64]$LogConfiguration.MaximumSizeInBytes
 
         if ($CurrentSizeBytes -ne $RequiredSizeBytes) {
             $CurrentSizeMB = [math]::Round($CurrentSizeBytes / 1MB, 2)
             $NonCompliantLogs.Add("$Log ($CurrentSizeMB MB)")
         }
-    }
-    catch [System.Diagnostics.Eventing.Reader.EventLogNotFoundException] {
-        Write-Output "Skipping unavailable log: $Log"
-        $SkippedLogs.Add($Log)
     }
     catch {
         $EvaluationFailures.Add("$Log - $($_.Exception.Message)")
@@ -87,5 +89,5 @@ if ($NonCompliantLogs.Count -gt 0) {
     exit 1
 }
 
-Write-Output "All $AvailableLogCount available event logs are configured for $SizeMB MB."
+Write-Output "All $AvailableLogCount available event logs are configured for $SizeMB MB. Skipped: $($SkippedLogs.Count)."
 exit 0

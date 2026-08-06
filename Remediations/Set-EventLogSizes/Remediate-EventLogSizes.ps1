@@ -11,7 +11,7 @@
 .NOTES
     Script Name   : Remediate-EventLogSizes.ps1
     Author        : Josh Tolsdorf
-    Last Modified : 2026-08-05
+    Last Modified : 2026-08-06
     Requires      : Administrator or SYSTEM privileges
 #>
 
@@ -51,12 +51,13 @@ $AlreadyCompliantCount = 0
 
 foreach ($Log in $Logs) {
     try {
-        $LogConfiguration = Get-WinEvent -ListLog $Log -ErrorAction Stop
-    }
-    catch [System.Diagnostics.Eventing.Reader.EventLogNotFoundException] {
-        Write-Output "Skipping unavailable log: $Log"
-        $SkippedLogs.Add($Log)
-        continue
+        $LogConfiguration = Get-WinEvent -ListLog $Log -ErrorAction SilentlyContinue
+
+        if (-not $LogConfiguration) {
+            Write-Output "Skipping unavailable log: $Log"
+            $SkippedLogs.Add($Log)
+            continue
+        }
     }
     catch {
         $Failures.Add("Unable to evaluate $Log - $($_.Exception.Message)")
@@ -70,10 +71,17 @@ foreach ($Log in $Logs) {
     }
 
     try {
-        $null = & "$env:SystemRoot\System32\wevtutil.exe" set-log $Log "/maxsize:$RequiredSizeBytes" 2>&1
+        $WevtutilOutput = & "$env:SystemRoot\System32\wevtutil.exe" set-log $Log "/maxsize:$RequiredSizeBytes" 2>&1
+        $WevtutilExitCode = $LASTEXITCODE
 
-        if ($LASTEXITCODE -ne 0) {
-            throw "wevtutil.exe returned exit code $LASTEXITCODE."
+        if ($WevtutilExitCode -ne 0) {
+            $ErrorMessage = ($WevtutilOutput | Out-String).Trim()
+
+            if ([string]::IsNullOrWhiteSpace($ErrorMessage)) {
+                $ErrorMessage = 'No additional error information was returned.'
+            }
+
+            throw "wevtutil.exe returned exit code $WevtutilExitCode. $ErrorMessage"
         }
 
         $VerifiedConfiguration = Get-WinEvent -ListLog $Log -ErrorAction Stop

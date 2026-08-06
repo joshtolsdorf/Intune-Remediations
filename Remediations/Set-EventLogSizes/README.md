@@ -8,15 +8,15 @@
 
 Detects and configures selected Windows troubleshooting and security event logs with a maximum size of **200 MB** using **Microsoft Intune Remediations**.
 
-The detection script evaluates every supported log available on the device. The remediation script updates non-compliant logs, verifies the resulting configuration, and safely skips event channels that are unavailable.
+The detection script evaluates every configured event log available on the device. The remediation script updates non-compliant logs, verifies each change, and safely skips event channels that are not installed or available.
 
 ---
 
 ## Overview
 
-Windows event logs are essential for endpoint troubleshooting, security investigations, application control auditing, Intune diagnostics, and incident response.
+Windows event logs provide essential information for endpoint troubleshooting, security investigations, application control auditing, Intune diagnostics, and incident response.
 
-Default log sizes may be too small to retain enough historical data, particularly on actively used endpoints. When a log reaches its maximum size, older events may be overwritten before administrators have an opportunity to review them.
+Default log sizes may not retain enough historical information on active endpoints. When an event log reaches its maximum size, older events may be overwritten before administrators can review them.
 
 This remediation standardizes selected event logs at:
 
@@ -24,9 +24,10 @@ This remediation standardizes selected event logs at:
 200 MB
 ```
 
-The scripts focus on logs associated with:
+The scripts manage logs associated with:
 
-* PowerShell
+* Windows PowerShell
+* PowerShell Core
 * Microsoft Defender
 * Windows Update
 * Microsoft Intune and MDM
@@ -38,15 +39,15 @@ The scripts focus on logs associated with:
 
 ## Features
 
-* Configures selected event logs to **200 MB**
+* Configures selected Windows event logs to **200 MB**
 * Detects logs that do not match the required size
-* Supports Windows PowerShell and PowerShell Core logs
+* Supports Windows PowerShell and PowerShell Core
 * Includes Microsoft Defender and Windows Update logs
 * Includes Intune and MDM diagnostic logs
 * Includes AppLocker and Code Integrity logs
-* Skips event logs that are unavailable on a device
-* Verifies every change after remediation
-* Reports updated, compliant, and skipped log counts
+* Skips event logs that do not exist on the device
+* Verifies each updated log after remediation
+* Reports compliant, updated, skipped, and failed logs
 * Safe to deploy repeatedly
 
 ---
@@ -57,11 +58,11 @@ This remediation is useful for organizations that want to:
 
 * Preserve additional event history for troubleshooting
 * Improve endpoint investigation capabilities
-* Retain PowerShell activity for a longer period
+* Retain PowerShell activity for longer periods
 * Improve visibility into Microsoft Defender events
-* Retain Intune enrollment and MDM diagnostic information
-* Support AppLocker or WDAC auditing
-* Standardize event log capacity across managed devices
+* Preserve Intune enrollment and MDM diagnostics
+* Support AppLocker and WDAC auditing
+* Standardize event-log capacity across managed Windows devices
 
 ---
 
@@ -84,15 +85,21 @@ $SizeMB = 200
 $RequiredSizeBytes = [int64]$SizeMB * 1MB
 ```
 
-To use a different size, update `$SizeMB` in both the detection and remediation scripts.
+For a 200 MB event log, the resulting byte value is:
 
-For example:
+```text
+209715200
+```
+
+To use a different size, update `$SizeMB` in both scripts.
+
+Example:
 
 ```powershell
 $SizeMB = 100
 ```
 
-The scripts automatically convert the configured value from megabytes to bytes before evaluating or updating the event logs.
+The detection and remediation scripts must use the same configured value.
 
 ---
 
@@ -146,22 +153,19 @@ The scripts automatically convert the configured value from megabytes to bytes b
 
 The detection script processes each configured event log and performs the following actions:
 
-1. Queries the event log using:
+1. Queries the event log using `Get-WinEvent`.
+2. Determines whether the event log exists on the device.
+3. Skips unavailable event logs.
+4. Reads the current `MaximumSizeInBytes` value.
+5. Compares the current size with the required size of 200 MB.
+6. Records any logs that cannot be evaluated.
+7. Reports every available log that does not exactly match the required size.
+
+The event log is queried using:
 
 ```powershell
-Get-WinEvent -ListLog $Log
+Get-WinEvent -ListLog $Log -ErrorAction SilentlyContinue
 ```
-
-2. Reads the current value of:
-
-```powershell
-MaximumSizeInBytes
-```
-
-3. Compares the current maximum size with the required size of **200 MB**.
-4. Skips logs that do not exist on the device.
-5. Records logs that could not be evaluated.
-6. Reports every available log that is not compliant.
 
 ---
 
@@ -174,7 +178,7 @@ The detection script returns **Exit 0** when every available event log is config
 Example output:
 
 ```text
-All 12 available event logs are configured for 200 MB.
+All 11 available event logs are configured for 200 MB. Skipped: 1.
 ```
 
 ### Non-Compliant
@@ -191,7 +195,7 @@ Event logs requiring a maximum size of 200 MB:
 
 ### Evaluation Failure
 
-The detection script also returns **Exit 1** when an available event log cannot be evaluated.
+The detection script returns **Exit 1** when an event log exists but cannot be evaluated.
 
 Example output:
 
@@ -202,15 +206,22 @@ Unable to evaluate one or more event logs:
 
 ### Unavailable Logs
 
-Logs that are not present on the device are skipped and do not make the device non-compliant.
+Logs that do not exist on the device are skipped and do not make the device non-compliant.
 
-Example:
+Example output:
 
 ```text
 Skipping unavailable log: PowerShellCore/Operational
 ```
 
-This allows the same scripts to be deployed across devices that may not have every Windows feature or PowerShell version installed.
+The script also provides a summary of all skipped logs:
+
+```text
+The following logs do not exist on this device and were skipped:
+  PowerShellCore/Operational
+```
+
+This allows the same remediation package to be deployed across devices that may not have every Windows feature or PowerShell version installed.
 
 ---
 
@@ -219,13 +230,15 @@ This allows the same scripts to be deployed across devices that may not have eve
 The remediation script processes each configured event log and performs the following actions:
 
 1. Confirms that the event log exists.
-2. Reads its current maximum size.
-3. Skips logs that are already configured for 200 MB.
-4. Configures non-compliant logs using `wevtutil.exe`.
-5. Queries the event log again after configuration.
-6. Verifies that the resulting size is exactly 200 MB.
-7. Records any configuration or verification failures.
-8. Reports a final remediation summary.
+2. Skips unavailable event logs.
+3. Reads the current maximum size.
+4. Skips logs that are already configured for 200 MB.
+5. Configures non-compliant logs using `wevtutil.exe`.
+6. Checks the exit code returned by `wevtutil.exe`.
+7. Queries the event log again.
+8. Verifies that the resulting size is exactly 200 MB.
+9. Records any configuration or verification failures.
+10. Reports a final remediation summary.
 
 ---
 
@@ -237,35 +250,68 @@ Non-compliant event logs are updated using:
 wevtutil.exe set-log <LogName> /maxsize:<SizeInBytes>
 ```
 
-The script executes the command using the native 64-bit Windows utility:
+The script explicitly uses the native Windows executable:
 
 ```text
 %SystemRoot%\System32\wevtutil.exe
 ```
 
-For a 200 MB configuration, the byte value passed to `wevtutil.exe` is:
+The PowerShell implementation is:
+
+```powershell
+$WevtutilOutput = & "$env:SystemRoot\System32\wevtutil.exe" `
+    set-log $Log `
+    "/maxsize:$RequiredSizeBytes" 2>&1
+```
+
+---
+
+## Error Handling
+
+The remediation script captures both:
+
+* The exit code returned by `wevtutil.exe`
+* Any text written to standard output or standard error
+
+If `wevtutil.exe` returns a nonzero exit code, the script records the failure.
+
+Example:
 
 ```text
-209715200
+Failed to configure Windows PowerShell - wevtutil.exe returned exit code 5. Access is denied.
+```
+
+If no additional error information is returned, the script reports:
+
+```text
+No additional error information was returned.
 ```
 
 ---
 
 ## Verification
 
-After each event log is updated, the script queries it again:
+After each log is updated, the script queries it again:
 
 ```powershell
-$VerifiedConfiguration = Get-WinEvent -ListLog $Log
+$VerifiedConfiguration = Get-WinEvent `
+    -ListLog $Log `
+    -ErrorAction Stop
 ```
 
 It then verifies:
 
 ```powershell
-$VerifiedConfiguration.MaximumSizeInBytes -eq $RequiredSizeBytes
+[int64]$VerifiedConfiguration.MaximumSizeInBytes -eq $RequiredSizeBytes
 ```
 
-The log is only counted as successfully updated when the verification result matches the required size.
+A log is only counted as successfully updated when the verification result exactly matches the configured size.
+
+Example verification failure:
+
+```text
+Failed to configure Windows PowerShell - Verification returned 100 MB instead of 200 MB.
+```
 
 ---
 
@@ -289,16 +335,19 @@ Already compliant: Microsoft-Windows-Windows Defender/Operational
 Skipping unavailable log: PowerShellCore/Operational
 ```
 
-### Verification Failure
-
-```text
-Failed to configure Windows PowerShell - Verification returned 100 MB instead of 200 MB.
-```
-
 ### Successful Summary
 
 ```text
 Event log remediation completed. Updated: 4; Already compliant: 7; Skipped: 1.
+```
+
+### Failed Summary
+
+When one or more available logs cannot be configured, the script returns **Exit 1** and reports each failure:
+
+```text
+One or more event logs could not be configured:
+  Failed to configure Windows PowerShell - Access is denied.
 ```
 
 ---
@@ -309,17 +358,17 @@ Event log remediation completed. Updated: 4; Already compliant: 7; Skipped: 1.
 
 | Exit Code | Meaning                                                      |
 | --------: | ------------------------------------------------------------ |
-|       `0` | All available logs are compliant                             |
+|       `0` | All available event logs are compliant                       |
 |       `1` | One or more logs are non-compliant or could not be evaluated |
 
 ### Remediation Script
 
 | Exit Code | Meaning                                                         |
 | --------: | --------------------------------------------------------------- |
-|       `0` | All available logs were configured successfully                 |
+|       `0` | All available event logs were configured successfully           |
 |       `1` | One or more logs could not be configured or failed verification |
 
-Unavailable event logs are skipped and do not cause either script to fail.
+Unavailable logs are skipped and do not cause either script to fail.
 
 ---
 
@@ -332,7 +381,7 @@ Unavailable event logs are skipped and do not cause either script to fail.
 | Run script in 64-bit PowerShell             | **Yes**                                   |
 | Schedule                                    | Daily, weekly, or organization preference |
 
-Running the scripts using logged-on credentials should be disabled so that the remediation executes under the **SYSTEM** account.
+Running the scripts using logged-on credentials should be disabled so the remediation executes under the **SYSTEM** account.
 
 ---
 
@@ -350,13 +399,14 @@ README.md
 
 1. Intune runs `Detect-EventLogSizes.ps1`.
 2. The script evaluates each configured event log available on the device.
-3. Logs that do not exist are skipped.
-4. If every available log is set to 200 MB, the device reports as compliant.
+3. Event logs that do not exist are skipped.
+4. If every available log is configured for 200 MB, the device reports as compliant.
 5. If one or more logs have an incorrect size, the device reports as non-compliant.
 6. Intune runs `Remediate-EventLogSizes.ps1`.
-7. Non-compliant logs are configured using `wevtutil.exe`.
-8. Each updated log is queried again for verification.
-9. The next detection cycle confirms the device is compliant.
+7. Non-compliant event logs are updated using `wevtutil.exe`.
+8. Each modified log is queried again for verification.
+9. Intune records the remediation output.
+10. The next detection cycle confirms whether the device is compliant.
 
 ---
 
@@ -378,7 +428,7 @@ Open an elevated PowerShell session and run:
 .\Remediate-EventLogSizes.ps1
 ```
 
-### Check a Specific Log
+### Check a Specific Event Log
 
 ```powershell
 Get-WinEvent -ListLog 'Windows PowerShell' |
@@ -388,11 +438,14 @@ Get-WinEvent -ListLog 'Windows PowerShell' |
 ### Display the Size in Megabytes
 
 ```powershell
-$Log = Get-WinEvent -ListLog 'Windows PowerShell'
+$LogConfiguration = Get-WinEvent -ListLog 'Windows PowerShell'
 
 [pscustomobject]@{
-    LogName       = $Log.LogName
-    MaximumSizeMB = [math]::Round($Log.MaximumSizeInBytes / 1MB, 2)
+    LogName       = $LogConfiguration.LogName
+    MaximumSizeMB = [math]::Round(
+        $LogConfiguration.MaximumSizeInBytes / 1MB,
+        2
+    )
 }
 ```
 
@@ -415,22 +468,25 @@ $Logs = @(
 )
 
 foreach ($Log in $Logs) {
-    try {
-        $Configuration = Get-WinEvent -ListLog $Log -ErrorAction Stop
+    $LogConfiguration = Get-WinEvent `
+        -ListLog $Log `
+        -ErrorAction SilentlyContinue
 
-        [pscustomobject]@{
-            LogName       = $Log
-            MaximumSizeMB = [math]::Round(
-                $Configuration.MaximumSizeInBytes / 1MB,
-                2
-            )
-        }
-    }
-    catch [System.Diagnostics.Eventing.Reader.EventLogNotFoundException] {
+    if (-not $LogConfiguration) {
         [pscustomobject]@{
             LogName       = $Log
             MaximumSizeMB = 'Unavailable'
         }
+
+        continue
+    }
+
+    [pscustomobject]@{
+        LogName       = $Log
+        MaximumSizeMB = [math]::Round(
+            $LogConfiguration.MaximumSizeInBytes / 1MB,
+            2
+        )
     }
 }
 ```
@@ -441,10 +497,16 @@ foreach ($Log in $Logs) {
 
 ### Change the Maximum Size
 
-Update the following value in both scripts:
+Update the following variable in both scripts:
 
 ```powershell
 $SizeMB = 200
+```
+
+For example:
+
+```powershell
+$SizeMB = 100
 ```
 
 ### Add an Event Log
@@ -458,41 +520,31 @@ $Logs = @(
 )
 ```
 
-### Find Event Log Names
+### Remove an Event Log
 
-List available event logs using:
+Remove or comment out its entry in the `$Logs` array in both scripts.
+
+### Find Available Event Logs
+
+List every registered event log:
 
 ```powershell
 Get-WinEvent -ListLog *
 ```
 
-Search for a specific category:
+Search for PowerShell-related logs:
 
 ```powershell
 Get-WinEvent -ListLog *PowerShell*
 ```
 
-You can also use:
+You can also enumerate event channels using:
 
 ```powershell
 wevtutil.exe enum-logs
 ```
 
-The channel name must match the event log's exact name.
-
----
-
-## Notes
-
-* Designed specifically for Microsoft Intune Remediations.
-* Executes under the SYSTEM account.
-* Applies only to event logs listed in the `$Logs` array.
-* Does not clear or overwrite existing event log entries during remediation.
-* Increasing the maximum size allows each log to retain more events before older records are overwritten.
-* Logs unavailable on a particular Windows edition or configuration are safely skipped.
-* The remediation uses `wevtutil.exe` for configuration and `Get-WinEvent` for verification.
-* The script is idempotent and can be safely deployed repeatedly.
-* Detection requires an exact size match rather than accepting any value greater than 200 MB.
+The name added to `$Logs` must exactly match the registered event channel name.
 
 ---
 
@@ -500,7 +552,7 @@ The channel name must match the event log's exact name.
 
 The scripts manage up to 12 event logs, each configured for a maximum size of 200 MB.
 
-Theoretical maximum combined capacity:
+The theoretical maximum combined capacity is:
 
 ```text
 12 × 200 MB = 2,400 MB
@@ -515,23 +567,40 @@ This is approximately:
 Actual disk usage will vary because:
 
 * Some logs may not exist on every device.
-* Event logs do not immediately consume their full configured maximum.
+* Event logs do not necessarily consume their full configured maximum immediately.
 * Log growth depends on endpoint activity and enabled auditing.
-* Windows manages event log file allocation independently.
+* Windows manages event-log file allocation independently.
+* Some channels may remain mostly empty.
 
-Organizations should consider available disk capacity before increasing the configured size or adding additional logs.
+Organizations should consider available disk capacity before increasing the configured size or adding additional event logs.
+
+---
+
+## Notes
+
+* Designed specifically for Microsoft Intune Remediations.
+* Executes under the SYSTEM account.
+* Applies only to event logs listed in the `$Logs` array.
+* Does not clear or delete existing event-log entries.
+* Increasing the maximum size allows more events to be retained before older records are overwritten.
+* Logs unavailable on a particular Windows edition or configuration are safely skipped.
+* The remediation uses `wevtutil.exe` for configuration and `Get-WinEvent` for validation.
+* The scripts are idempotent and can be safely deployed repeatedly.
+* Detection requires an exact size match.
+* Logs configured above or below 200 MB are considered non-compliant.
 
 ---
 
 ## Known Limitations
 
-* The scripts configure only maximum log size.
-* Log retention and overwrite behavior are not modified.
-* Event log channel enablement is not changed.
+* The scripts configure only the maximum event-log size.
+* Log retention and overwrite behavior are not changed.
+* Event-log channel enablement is not modified.
 * Disabled event channels remain disabled.
-* A log configured above 200 MB is considered non-compliant because detection requires an exact match.
-* Event channels protected by another management authority may revert after remediation.
-* Group Policy or another configuration platform may override the values configured by these scripts.
+* Group Policy, Intune configuration profiles, or another management platform may overwrite the configured values.
+* Event logs protected by another management authority may revert after remediation.
+* A log configured above 200 MB is still considered non-compliant because the detection script requires an exact match.
+* The scripts do not configure the standard `Application`, `System`, or `Security` logs unless they are manually added to the `$Logs` array.
 
 ---
 
@@ -539,4 +608,4 @@ Organizations should consider available disk capacity before increasing the conf
 
 | Version | Date       | Notes                                     |
 | ------- | ---------- | ----------------------------------------- |
-| 1.0.0   | 2026-08-04 | Initial detection and remediation release |
+| 1.0.0   | 2026-08-06 | Initial detection and remediation release |
